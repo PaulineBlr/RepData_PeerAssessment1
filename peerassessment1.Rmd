@@ -1,6 +1,0 @@
-Peer Assessment 1
------------------
-  
-  # Loading data
-  
-  

@@ -16,6 +16,7 @@ The activity.csv file, which results from unzipping activity.zip, should be loca
 ## What is the mean total number of steps taken per day?
 
 Missing value will be ignored when calculating the total number of steps taken per day.
+Note that the library *dplyr* will be used in the rest of this document.
 
 ```{r stepsPerDay, message = FALSE}
 library(dplyr)
@@ -25,7 +26,7 @@ stepsPerDay
 
 The histogram of total number of steps taken per day :
 
-```{r histograpStepsPerDay}
+```{r histogramStepsPerDay}
 hist(stepsPerDay$steps, 
      breaks = 10,
      main = "Histogram of total number of steps taken each day",
@@ -47,7 +48,7 @@ The median is `r medianStepsPerDay`
 
 The average daily activity pattern can be visualized on a graph.   In order to identify the pattern, the approach taken here is to average the number of steps per interval over days.
 
-```{r}
+```{r activityPattern}
 stepsPerInterval <- data[!is.na(data$steps),c("steps","interval")] %>% group_by(interval) %>% summarise_each(funs(mean))
 plot(stepsPerInterval$interval,stepsPerInterval$steps,
      type = 'l',
@@ -97,7 +98,7 @@ stepsPerDay2
 
 The histogram of total number of steps taken per day is now:
 
-```{r, fig.width=10}
+```{r histogramStepsPerDayWithoutNAs, fig.width=10}
 hist(stepsPerDay2$steps, 
      breaks = 10,
      main = "Histogram of total number of steps taken each day, missing values have been filled in",
@@ -118,14 +119,31 @@ Imputing missing values did not have a major impact on previous estimates.
 
 ##Are there differences in activity patterns between weekdays and weekends?
 
-```{r message = FALSE}
+In the following code chunk, the variable "day" is created. It symbolizes if the day of the observation is a weekday or a weeken (two-factor variable).
+
+```{r}
 newdata$date <- as.Date(newdata$date,format = "%Y-%M-%d")
+newdata$day <- weekdays(newdata$date)
+
 weekdays = c("Lundi","Mardi","Mercredi","Jeudi","Vendredi")
 weekend = c("Samedi","Dimanche")
-dayLabel <- function(day){
-  if(as.character(day) %in% weekdays){"Weekday"}
-  if(as.character(day) %in% weekend){"Weekend"}
-}
-#transform(newdata,dayType = dayLabel(weekdays(date)))
+
+newdata$day[newdata$day %in% weekdays] <- "Weekday"
+newdata$day[newdata$day %in% weekend] <- "Weekend"
+
+```
+
+This variable makes it simpler to build a plot showing the average number of steps taken for each time interval, averaged across all weekday days or weekend days.
+
+```{r weekdayweekend,message=FALSE}
+stepsPerIntervalDay <- newdata[,c("steps","interval","day")] %>% group_by(interval,day) %>% summarise_each(funs(mean))
+
+library(lattice)
+xyplot(steps~interval|day, 
+  	  data = stepsPerIntervalDay,
+  	  type = "l",
+      main="Average steps taken per interval, on weekdays and weekends", 
+      ylab="Steps", 
+  	  xlab="Time interval")
 ```
 
